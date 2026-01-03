@@ -1,5 +1,5 @@
 # Rebalancing_Project
-**Marius Fortuna**
+**Author:Marius Fortuna**
 
 This project compares classic portfolio rebalancing rules against a machine-learning-based trigger for a two-asset portfolio:
 
