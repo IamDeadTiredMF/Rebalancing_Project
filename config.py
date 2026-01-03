@@ -4,7 +4,7 @@ start_date="2010-01-01"
 end_date="2025-01-01" #last day is excluded in yfinance download, so set to first day of next year to include full 2024 data (31.12.2024)
 train_date="2017-12-31" #date to split train and test data instead of using % split. Test data will be from 2018-01-01 to end_date
 #etf tickers
-stock_ticker_etf="QQQ" #Invesco QQQ Trust ETF
+stock_ticker_etf="QQQ" #Nasdaq-100 ETF
 bond_ticker_etf="TLT" #iShares 20+ Year Treasury Bond ETF
 #investment parameters
 initial_wealth=100000 #initial investment amount in USD
@@ -26,7 +26,8 @@ horizon = 126 #days ahead to check if rebalancing was beneficial in training the
 decision_frequency = 1 #make decision every n days if there is a need to reduce computation
 trade_lag_days = 1 #lag between decision and trade execution to avoid lookahead bias
 random_seed=42 #for reproducibility
-prob_threshold = 0.65 #threshold for finding if rebalancing is beneficial
+prob_quantile = 0.90
+ml_thr_window = 252 
 cv_folds = 5 #number of folds for cross validation
 rf_n_estimators = 100 #number of trees in random forest
 rf_max_depth = 10 #maximum depth of each tree in random forest

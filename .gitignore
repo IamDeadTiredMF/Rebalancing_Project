@@ -1,16 +1,17 @@
-# 1. Ignore all files in these folders
 data/raw/*
 data/processed/*
 outputs/results/*
 outputs/models/*
 
-# 2. But DO NOT ignore the .gitkeep files (this keeps the folders alive)
-!**/ .gitkeep
-
-# 3. Keep the visual "Exhibits" (The proof of your work)
+!**/.gitkeep
 !outputs/figures/*.png
 !outputs/tables/*.md
-
-# 4. Standard Python junk
 __pycache__/
+*.pyc
 .DS_Store
+
+.ipynb_checkpoints/
+
+.venv/
+venv/
+.env/
