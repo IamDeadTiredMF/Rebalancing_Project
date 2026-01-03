@@ -27,14 +27,7 @@ def train():
     xt, yt = X[X.index <= cutoff], y[y.index <= cutoff]
     xv, yv = X[X.index > cutoff], y[y.index > cutoff]
 
-    clf = RandomForestClassifier(
-        n_estimators=config.rf_n_estimators,
-        max_depth=config.rf_max_depth,
-        min_samples_split=config.rf_sample_split,
-        min_samples_leaf=config.rf_samples_leaf,
-        class_weight="balanced",
-        random_state=config.random_seed,
-    )
+    clf = RandomForestClassifier(n_estimators=config.rf_n_estimators,max_depth=config.rf_max_depth,min_samples_split=config.rf_sample_split,min_samples_leaf=config.rf_samples_leaf,class_weight="balanced",random_state=config.random_seed)
     clf.fit(xt, yt)
 
     probs = clf.predict_proba(xv)[:, 1]
