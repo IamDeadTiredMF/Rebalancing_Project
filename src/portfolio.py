@@ -128,39 +128,6 @@ def simulate_threshold_rebalancing(prices, threshold=None, transaction_cost=None
     return pd.DataFrame(rows).set_index("date")
 
 
-def simulate_ml_rebalancing(prices, ml_predictions, prob_threshold=0.0, transaction_cost=None, initial_wealth=None):
-    iw = initial_wealth or config.initial_wealth
-    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[1]
-    pt = float(prob_threshold)
-    min_d = min(config.thresholds_options)
-
-    p = Portfolio(iw, config.stock_weight, config.bond_weight)
-    p.initialize_holdings(prices["stock"].iloc[0], prices["bond"].iloc[0])
-
-    rows, lag, pending = [], int(config.trade_lag_days), None
-    step = int(config.decision_frequency)
-
-    for i, (date, row) in enumerate(prices.iterrows()):
-        exec_today, t_today, c_today = False, 0.0, 0.0
-
-        if pending is not None:
-            pending -= 1
-            if pending == 0:
-                t_today, c_today = p.rebalance(row["stock"], row["bond"], tc, date)
-                exec_today, pending = True, None
-
-        prob = float(ml_predictions.get(date, 0.0))
-        drift = p.get_drift(row["stock"], row["bond"])
-
-        if pending is None and i % step == 0 and drift > min_d and prob > pt and i < len(prices) - lag:
-            pending = lag
-
-        sw, bw = p.get_weights(row["stock"], row["bond"])
-        rows.append({"date": date, "value": p.get_value(row["stock"], row["bond"]), "stock_weight": sw, "bond_weight": bw, "drift": drift, "rebalanced": exec_today, "turnover": t_today, "cost": c_today})
-
-    return pd.DataFrame(rows).set_index("date")
-
-
 def simulate_ml_rebalancing_model(prices, model, features_df, feature_cols, invert_proba=False, prob_threshold=0.0, transaction_cost=None, initial_wealth=None, thr_window=None, prob_quantile=None):
     iw = initial_wealth or config.initial_wealth
     tc = transaction_cost if transaction_cost is not None else config.transaction_cost[1]
