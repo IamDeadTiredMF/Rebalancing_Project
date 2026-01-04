@@ -96,7 +96,7 @@ python -m main
 
 **Note:** The pipeline will skip regenerating outputs if they already exist. Delete them first if you want fresh results.
 
-#Optional: there is also separate tests, present in most files. If you want to run use:
+# Optional: there is also separate tests, present in most files. If you want to run use:
 
 python -m src.data_processing 
 python -m src.features
