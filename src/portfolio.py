@@ -69,7 +69,7 @@ def simulate_buy_hold(prices, initial_wealth=None):
 
 def simulate_calendar_rebalancing(prices, frequency="monthly", transaction_cost=None, initial_wealth=None):
     iw = initial_wealth or config.initial_wealth
-    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[2]
+    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[1]
 
     p = Portfolio(iw, config.stock_weight, config.bond_weight)
     p.initialize_holdings(prices["stock"].iloc[0], prices["bond"].iloc[0])
@@ -99,7 +99,7 @@ def simulate_calendar_rebalancing(prices, frequency="monthly", transaction_cost=
 
 def simulate_threshold_rebalancing(prices, threshold=None, transaction_cost=None, initial_wealth=None):
     iw = initial_wealth or config.initial_wealth
-    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[2]
+    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[1]
     thr = threshold if threshold is not None else config.thresholds_options[1]
 
     p = Portfolio(iw, config.stock_weight, config.bond_weight)
@@ -130,7 +130,7 @@ def simulate_threshold_rebalancing(prices, threshold=None, transaction_cost=None
 
 def simulate_ml_rebalancing(prices, ml_predictions, prob_threshold=0.0, transaction_cost=None, initial_wealth=None):
     iw = initial_wealth or config.initial_wealth
-    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[2]
+    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[1]
     pt = float(prob_threshold)
     min_d = min(config.thresholds_options)
 
@@ -163,7 +163,7 @@ def simulate_ml_rebalancing(prices, ml_predictions, prob_threshold=0.0, transact
 
 def simulate_ml_rebalancing_model(prices, model, features_df, feature_cols, invert_proba=False, prob_threshold=0.0, transaction_cost=None, initial_wealth=None, thr_window=None, prob_quantile=None):
     iw = initial_wealth or config.initial_wealth
-    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[2]
+    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[1]
     pt = float(prob_threshold)
     min_d = min(config.thresholds_options)
     step = int(config.decision_frequency)
