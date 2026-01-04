@@ -74,7 +74,7 @@ def simulate_calendar_rebalancing(prices, frequency="monthly", transaction_cost=
     p = Portfolio(iw, config.stock_weight, config.bond_weight)
     p.initialize_holdings(prices["stock"].iloc[0], prices["bond"].iloc[0])
 
-    freq_map = {"monthly": "M", "quarterly": "Q", "yearly": "Y"}
+    freq_map = {"monthly": "ME", "quarterly": "QE", "yearly": "YE"}
     decision_days = set(_period_end_trading_days(prices.index, freq_map[frequency]))
 
     rows, lag, pending = [], int(config.trade_lag_days), None
