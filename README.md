@@ -78,6 +78,24 @@ python -m main
 
 # this will download, clean the prices, compute the features and labels, train the model, run backtests on the test period, generate plots and tables.
 
+## Regenerating Outputs
+
+If you want to regenerate all figures and tables from scratch:
+
+1. **Delete existing outputs:**
+```bash
+rm outputs/results/backtest_IWM_TLT.csv
+rm outputs/figures/*.png
+rm outputs/tables/summary_table.md
+```
+
+2. **Run the pipeline:**
+```bash
+python -m main
+```
+
+**Note:** The pipeline will skip regenerating outputs if they already exist. Delete them first if you want fresh results.
+
 #Optional: there is also separate tests, present in most files. If you want to run use:
 
 python -m src.data_processing 
