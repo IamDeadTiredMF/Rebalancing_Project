@@ -16,7 +16,6 @@ thresholds_options=[0.03,0.05,0.07] #3%,5%,7% thresholds
 transaction_cost=[0,0.0005, 0.001, 0.0015] #0.15% per transaction
 # transaction_cost is applied to total turnover (amount bought + amount sold)
 #performance metrics
-risk_free_rate = 0.02  # 2% annual risk-free rate for Sharpe Ratio calculation
 trading_days_per_year = 252 # Trading days per year (for annualization)
 #data parameters for testing indicators
 volatility_past_period= 20 # i used 20 days since it's approximately one month of trading days

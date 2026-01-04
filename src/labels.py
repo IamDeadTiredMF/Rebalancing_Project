@@ -71,7 +71,7 @@ def load_labels():
 if __name__ == "__main__":
     config.make_dirs()
     px = clean_prices(download_prices(refresh=False))
-    lbls = create_labels(px, tc=0.001, h=config.horizon, lag=config.trade_lag_days, min_d=min(config.thresholds_options))
+    lbls=create_labels(px,tc=config.transaction_cost[2],h=config.horizon,lag=config.trade_lag_days,min_d=min(config.thresholds_options))
     print(f"cnt: {len(lbls)}")
     print(f"pos: {int(lbls.sum())} | rate: {lbls.mean():.4f}")
     print(lbls.head(10))

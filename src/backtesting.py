@@ -51,10 +51,9 @@ def run_backtest():
         paths[tag] = simulate_ml_rebalancing(px_test, ml_map_test, prob_threshold=0.0, initial_wealth=config.initial_wealth)
 
     stats = {k: calculate_performance_metrics(v, initial_wealth=config.initial_wealth) for k, v in paths.items()}
-    res = pd.DataFrame(stats).T.sort_values("sharpe_ratio", ascending=False)
-
-    print("BACKTEST RESULTS (TEST ONLY, sorted by sharpe ratio)")
-    display_cols = ["sharpe_ratio", "annualized_return", "annualized_volatility", "n_rebalances", "total_costs", "final_value"]
+    res=pd.DataFrame(stats).T.sort_values("sortino_ratio",ascending=False)
+    print("BACKTEST RESULTS (TEST ONLY, sorted by sortino ratio)")
+    display_cols=["sortino_ratio","annualized_return","annualized_downside_volatility","annualized_volatility","n_rebalances","total_costs","final_value"]
     print(res[display_cols].to_string())
 
     out_path = config.get_backtest_file_path()

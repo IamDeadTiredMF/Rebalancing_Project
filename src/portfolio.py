@@ -69,7 +69,7 @@ def simulate_buy_hold(prices, initial_wealth=None):
 
 def simulate_calendar_rebalancing(prices, frequency="monthly", transaction_cost=None, initial_wealth=None):
     iw = initial_wealth or config.initial_wealth
-    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[1]
+    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[2]
 
     p = Portfolio(iw, config.stock_weight, config.bond_weight)
     p.initialize_holdings(prices["stock"].iloc[0], prices["bond"].iloc[0])
@@ -99,7 +99,7 @@ def simulate_calendar_rebalancing(prices, frequency="monthly", transaction_cost=
 
 def simulate_threshold_rebalancing(prices, threshold=None, transaction_cost=None, initial_wealth=None):
     iw = initial_wealth or config.initial_wealth
-    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[1]
+    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[2]
     thr = threshold if threshold is not None else config.thresholds_options[1]
 
     p = Portfolio(iw, config.stock_weight, config.bond_weight)
@@ -130,7 +130,7 @@ def simulate_threshold_rebalancing(prices, threshold=None, transaction_cost=None
 
 def simulate_ml_rebalancing(prices, ml_predictions, prob_threshold=0.0, transaction_cost=None, initial_wealth=None):
     iw = initial_wealth or config.initial_wealth
-    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[1]
+    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[2]
     pt = float(prob_threshold)
     min_d = min(config.thresholds_options)
 
@@ -161,18 +161,22 @@ def simulate_ml_rebalancing(prices, ml_predictions, prob_threshold=0.0, transact
     return pd.DataFrame(rows).set_index("date")
 
 
-def calculate_performance_metrics(results, initial_wealth=None):
-    iw = initial_wealth or config.initial_wealth
-    v = results["value"]
+def calculate_performance_metrics(results,initial_wealth=None):
+    iw=initial_wealth or config.initial_wealth
+    v=results["value"]
 
-    total_ret = (v.iloc[-1] - iw) / iw
-    n_years = len(v) / config.trading_days_per_year
-    ann_ret = (1 + total_ret) ** (1 / n_years) - 1 if n_years > 0 else 0
+    total_ret=(v.iloc[-1]-iw)/iw
+    n_years=len(v)/config.trading_days_per_year
+    ann_ret=(1+total_ret)**(1/n_years)-1 if n_years>0 else 0.0
 
-    daily_ret = v.pct_change().dropna()
-    ann_vol = daily_ret.std() * np.sqrt(config.trading_days_per_year) if len(daily_ret) > 1 else 0
-    sharpe = (ann_ret - config.risk_free_rate) / ann_vol if ann_vol > 0 else 0
+    daily_ret=v.pct_change().dropna()
+    ann_vol=daily_ret.std(ddof=0)*(config.trading_days_per_year**0.5) if len(daily_ret)>1 else 0.0
 
-    dd = (v - v.expanding().max()) / v.expanding().max()
+    neg=daily_ret[daily_ret<0]
+    down_std=neg.std(ddof=0) if len(neg)>1 else 1e-9
+    ann_down=down_std*(config.trading_days_per_year**0.5)
+    sortino=(daily_ret.mean()/down_std)*(config.trading_days_per_year**0.5) if len(daily_ret)>1 else 0.0
 
-    return {"total_return": total_ret, "annualized_return": ann_ret, "annualized_volatility": ann_vol, "sharpe_ratio": sharpe, "max_drawdown": dd.min(), "n_rebalances": int(results["rebalanced"].sum()), "avg_drift": float(results["drift"].mean()), "max_drift": float(results["drift"].max()), "final_value": float(v.iloc[-1]), "total_costs": float(results["cost"].sum()), "total_turnover": float(results["turnover"].sum())}
+    dd=(v-v.expanding().max())/v.expanding().max()
+
+    return {"total_return":total_ret,"annualized_return":ann_ret,"annualized_volatility":ann_vol,"annualized_downside_volatility":ann_down,"sortino_ratio":sortino,"max_drawdown":dd.min(),"n_rebalances":int(results["rebalanced"].sum()),"avg_drift":float(results["drift"].mean()),"max_drift":float(results["drift"].max()),"final_value":float(v.iloc[-1]),"total_costs":float(results["cost"].sum()),"total_turnover":float(results["turnover"].sum())}
