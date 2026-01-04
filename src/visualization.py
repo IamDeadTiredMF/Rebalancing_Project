@@ -2,9 +2,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import joblib
 import config
-from src.portfolio import simulate_buy_hold, simulate_calendar_rebalancing, simulate_threshold_rebalancing, simulate_ml_rebalancing
 from src.data_processing import download_prices, clean_prices
 from src.features import add_features
+from src.portfolio import *
 
 
 def plot_comparison():
@@ -13,32 +13,19 @@ def plot_comparison():
     px_test = px[px.index > cutoff].copy()
 
     s0, b0 = px["stock"].iloc[0], px["bond"].iloc[0]
-    sq, bq = (config.initial_wealth * config.stock_weight) / s0, (config.initial_wealth * config.bond_weight) / b0
+    sq = (config.initial_wealth * config.stock_weight) / s0
+    bq = (config.initial_wealth * config.bond_weight) / b0
 
-    has_ml, ml_map_test = False, None
+    model, f_cols, f_df = None, None, None
     try:
-        m_data = joblib.load(config.get_model_file_path())
-        model, f_cols = m_data["model"], m_data["cols"]
+        m_data = joblib.load(config.get_model_file_path()); model, f_cols = m_data["model"], m_data["cols"]; f_df = add_features(px, s_qty=sq, b_qty=bq)
+    except Exception:
+        model, f_cols, f_df = None, None, None
 
-        f_df = add_features(px, s_qty=sq, b_qty=bq)
-        p = pd.Series(model.predict_proba(f_df[f_cols])[:, 1], index=f_df.index)
-        p = p.reindex(px.index).fillna(0.0)
+    paths = {"Buy & Hold": simulate_buy_hold(px_test, initial_wealth=config.initial_wealth), "Quarterly Rebalance": simulate_calendar_rebalancing(px_test, "quarterly", initial_wealth=config.initial_wealth), "Threshold (5% Drift)": simulate_threshold_rebalancing(px_test, threshold=0.05, initial_wealth=config.initial_wealth)}
 
-        thr = p.rolling(config.ml_thr_window).quantile(config.prob_quantile)
-        score = (p - thr).fillna(-1.0)
-
-        ml_map_test = {k: float(score.loc[k]) for k in px_test.index if k in score.index}
-        has_ml = True
-    except Exception as e:
-        print(f"ML skipped in plots: {e}")
-
-    paths = {}
-    paths["Buy & Hold"] = simulate_buy_hold(px_test, initial_wealth=config.initial_wealth)
-    paths["Quarterly Rebalance"] = simulate_calendar_rebalancing(px_test, "quarterly", initial_wealth=config.initial_wealth)
-    paths["Threshold (5% Drift)"] = simulate_threshold_rebalancing(px_test, threshold=0.05, initial_wealth=config.initial_wealth)
-
-    if has_ml and ml_map_test is not None:
-        paths[f"ML Rolling Q{int(config.prob_quantile*100)}"] = simulate_ml_rebalancing(px_test, ml_map_test, prob_threshold=0.0, initial_wealth=config.initial_wealth)
+    if model is not None and f_cols is not None and f_df is not None:
+        paths[f"ML Model Rolling Q{int(config.prob_quantile*100)}"] = simulate_ml_rebalancing_model(px_test, model, f_df, f_cols, invert_proba=False, prob_threshold=0.0, initial_wealth=config.initial_wealth, thr_window=config.ml_thr_window, prob_quantile=config.prob_quantile)
 
     plt.figure(figsize=(12, 6))
     for name, df in paths.items():
@@ -53,9 +40,7 @@ def plot_comparison():
 
     plt.figure(figsize=(12, 6))
     for name, df in paths.items():
-        v = df["value"]
-        dd = (v - v.cummax()) / v.cummax() * 100
-        plt.plot(df.index, dd, label=name, linewidth=1.5)
+        v = df["value"]; dd = (v - v.cummax()) / v.cummax() * 100; plt.plot(df.index, dd, label=name, linewidth=1.5)
     plt.title("Test Period Drawdowns", fontsize=14, fontweight="bold")
     plt.ylabel("Drawdown %")
     plt.axhline(0, color="black", linestyle="-", linewidth=0.5)
@@ -84,5 +69,7 @@ def plot_comparison():
 if __name__ == "__main__":
     config.make_dirs()
     plot_comparison()
+
+
 
 

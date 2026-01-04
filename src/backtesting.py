@@ -1,64 +1,43 @@
 import pandas as pd
 import joblib
 import config
-from src.portfolio import simulate_buy_hold, simulate_calendar_rebalancing, simulate_threshold_rebalancing, simulate_ml_rebalancing, calculate_performance_metrics
 from src.data_processing import download_prices, clean_prices
 from src.features import add_features
+from src.portfolio import *
 
 
-def run_backtest():
+def run_backtest(show_table=True):
     px = clean_prices(download_prices(refresh=False))
     cutoff = pd.to_datetime(config.train_date)
     px_test = px[px.index > cutoff].copy()
 
     s0, b0 = px["stock"].iloc[0], px["bond"].iloc[0]
-    sq, bq = (config.initial_wealth * config.stock_weight) / s0, (config.initial_wealth * config.bond_weight) / b0
+    sq = (config.initial_wealth * config.stock_weight) / s0
+    bq = (config.initial_wealth * config.bond_weight) / b0
 
-    ml_map_test = None
+    model, f_cols, f_df = None, None, None
     try:
-        m_data = joblib.load(config.get_model_file_path())
-        model, f_cols = m_data["model"], m_data["cols"]
-
-        f_df = add_features(px, s_qty=sq, b_qty=bq)
-        p = pd.Series(model.predict_proba(f_df[f_cols])[:, 1], index=f_df.index)
-        p = p.reindex(px.index).fillna(0.0)
-
-        thr = p.rolling(config.ml_thr_window).quantile(config.prob_quantile)
-        score = (p - thr).fillna(-1.0)
-
-        ml_map_test = {k: float(score.loc[k]) for k in px_test.index if k in score.index}
-
-        print("ml model loaded")
+        m_data = joblib.load(config.get_model_file_path()); model, f_cols = m_data["model"], m_data["cols"]; f_df = add_features(px, s_qty=sq, b_qty=bq)
     except Exception:
-        print("no ml model found, skipping ml strategy")
+        model, f_cols, f_df = None, None, None
 
-    paths = {}
-    paths["buy_hold"] = simulate_buy_hold(px_test, initial_wealth=config.initial_wealth)
+    paths = {"buy_hold": simulate_buy_hold(px_test, initial_wealth=config.initial_wealth), **{f"calendar_{f}": simulate_calendar_rebalancing(px_test, frequency=f, initial_wealth=config.initial_wealth) for f in config.rebalance_frequencies}, **{f"threshold_{int(t*100)}pct": simulate_threshold_rebalancing(px_test, threshold=t, initial_wealth=config.initial_wealth) for t in config.thresholds_options}}
 
-    for freq in config.rebalance_frequencies:
-        tag = f"calendar_{freq}"
-        print(f"running {tag}...")
-        paths[tag] = simulate_calendar_rebalancing(px_test, frequency=freq, initial_wealth=config.initial_wealth)
+    if model is not None and f_cols is not None and f_df is not None:
+        tag = f"ml_model_rollq_{int(config.prob_quantile*100)}"
+        paths[tag] = simulate_ml_rebalancing_model(px_test, model, f_df, f_cols, invert_proba=False, prob_threshold=0.0, initial_wealth=config.initial_wealth, thr_window=config.ml_thr_window, prob_quantile=config.prob_quantile)
 
-    for thr0 in config.thresholds_options:
-        tag = f"threshold_{int(thr0*100)}pct"
-        print(f"running {tag}...")
-        paths[tag] = simulate_threshold_rebalancing(px_test, threshold=thr0, initial_wealth=config.initial_wealth)
-
-    if ml_map_test is not None:
-        tag = f"ml_rollq_{int(config.prob_quantile*100)}"
-        print(f"running {tag}...")
-        paths[tag] = simulate_ml_rebalancing(px_test, ml_map_test, prob_threshold=0.0, initial_wealth=config.initial_wealth)
-
-    stats = {k: calculate_performance_metrics(v, initial_wealth=config.initial_wealth) for k, v in paths.items()}
-    res=pd.DataFrame(stats).T.sort_values("sortino_ratio",ascending=False)
-    print("BACKTEST RESULTS (TEST ONLY, sorted by sortino ratio)")
-    display_cols=["sortino_ratio","annualized_return","annualized_downside_volatility","annualized_volatility","n_rebalances","total_costs","final_value"]
-    print(res[display_cols].to_string())
+    res = pd.DataFrame({k: calculate_performance_metrics(v, initial_wealth=config.initial_wealth) for k, v in paths.items()}).T
+    res = res.sort_values("sortino_ratio", ascending=False)
 
     out_path = config.get_backtest_file_path()
     res.to_csv(out_path)
-    print(f"\nresults saved to: {out_path}")
+
+    if show_table:
+        display_cols = ["sortino_ratio", "annualized_return", "annualized_downside_volatility", "annualized_volatility", "n_rebalances", "total_costs", "final_value"]
+        print("BACKTEST RESULTS (TEST ONLY, sorted by sortino ratio)")
+        print(res[display_cols].to_string())
+        print(f"results saved to: {out_path}")
 
     return res
 
@@ -66,6 +45,8 @@ def run_backtest():
 if __name__ == "__main__":
     config.make_dirs()
     run_backtest()
+
+
 
 
 

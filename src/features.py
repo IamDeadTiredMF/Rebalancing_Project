@@ -4,7 +4,7 @@ import config
 from src.data_processing import download_prices, clean_prices
 
 
-cols = ["drift", "v_stock", "v_bond", "s_b_corr", "ma_cross", "v_ratio", "rsi", "b_upper", "dom", "is_tom", "v_trend"]
+cols = ["drift", "v_stock", "v_bond", "s_b_corr", "ma_cross", "v_ratio", "rsi", "b_upper", "dom", "is_tom", "v_trend", "stock_momentum_60"]
 
 
 def add_features(df_prices, s_qty, b_qty):
@@ -32,7 +32,9 @@ def add_features(df_prices, s_qty, b_qty):
     df["ma_cross"] = (df["stock"].rolling(20).mean() > df["stock"].rolling(60).mean()).astype(int)
 
     df["dom"] = df.index.day
-    df["is_tom"] = ((df["dom"] <= 2) | (df["dom"] >= 28)).astype(int)
+    df["is_tom"] = (df.index + pd.offsets.BMonthEnd(0) == df.index).astype(int)
+    df["stock_momentum_60"] = df["stock"].pct_change(60)
+    
 
     return df.dropna().copy()
 

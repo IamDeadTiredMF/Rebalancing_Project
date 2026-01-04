@@ -1,4 +1,4 @@
-import pandas as pd
+import pandas as pd 
 import numpy as np
 import config
 
@@ -157,6 +157,65 @@ def simulate_ml_rebalancing(prices, ml_predictions, prob_threshold=0.0, transact
 
         sw, bw = p.get_weights(row["stock"], row["bond"])
         rows.append({"date": date, "value": p.get_value(row["stock"], row["bond"]), "stock_weight": sw, "bond_weight": bw, "drift": drift, "rebalanced": exec_today, "turnover": t_today, "cost": c_today})
+
+    return pd.DataFrame(rows).set_index("date")
+
+
+def simulate_ml_rebalancing_model(prices, model, features_df, feature_cols, invert_proba=False, prob_threshold=0.0, transaction_cost=None, initial_wealth=None, thr_window=None, prob_quantile=None):
+    iw = initial_wealth or config.initial_wealth
+    tc = transaction_cost if transaction_cost is not None else config.transaction_cost[2]
+    pt = float(prob_threshold)
+    min_d = min(config.thresholds_options)
+    step = int(config.decision_frequency)
+
+    win = int(thr_window or config.ml_thr_window)
+    q = float(prob_quantile or config.prob_quantile)
+
+    classes = list(getattr(model, "classes_", [0, 1]))
+    pos_idx = classes.index(1) if 1 in classes else 1
+
+    p = Portfolio(iw, config.stock_weight, config.bond_weight)
+    p.initialize_holdings(prices["stock"].iloc[0], prices["bond"].iloc[0])
+
+    rows, lag, pending = [], int(config.trade_lag_days), None
+    prob_hist = []
+
+    for i, (date, row) in enumerate(prices.iterrows()):
+        exec_today, t_today, c_today = False, 0.0, 0.0
+
+        if pending is not None:
+            pending -= 1
+            if pending == 0:
+                t_today, c_today = p.rebalance(row["stock"], row["bond"], tc, date)
+                exec_today, pending = True, None
+
+        drift = p.get_drift(row["stock"], row["bond"])
+
+        prob = 0.0
+        score = -1e9
+
+        if i % step == 0 and date in features_df.index:
+            x = features_df.loc[date, feature_cols].copy()
+            if "drift" in x.index:
+                x["drift"] = drift
+
+            x = x.reindex(feature_cols)
+            x1 = pd.DataFrame([x.values], columns=feature_cols)
+            prob = float(model.predict_proba(x1)[0][pos_idx])
+
+            if invert_proba:
+                prob = 1.0 - prob
+
+            prob_hist.append(prob)
+            if len(prob_hist) >= win:
+                thr = float(np.quantile(prob_hist[-win:], q))
+                score = prob - thr
+
+        if pending is None and i % step == 0 and drift > min_d and score > pt and i < len(prices) - lag:
+            pending = lag
+
+        sw, bw = p.get_weights(row["stock"], row["bond"])
+        rows.append({"date": date, "value": p.get_value(row["stock"], row["bond"]), "stock_weight": sw, "bond_weight": bw, "drift": drift, "rebalanced": exec_today, "turnover": t_today, "cost": c_today, "ml_prob": prob, "ml_score": score})
 
     return pd.DataFrame(rows).set_index("date")
 

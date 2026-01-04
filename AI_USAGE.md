@@ -4,32 +4,24 @@
 **Course:** Advanced Programming (Fall 2025)
 
 ## Overview
-I developed this project independently and used AI tools as a supporting resource (similar to documentation or online forums). AI assistance was limited to debugging, implementation support, and improving clarity of documentation. The project framing, financial reasoning, core methodology, and interpretation of results are my own.
+I developed this project independently. I used AI tools as supplementary support (similar to documentation or forum troubleshooting) mainly to clarify library usage, diagnose bugs, and improve documentation. The research question, methodology design, implementation decisions, and interpretation of results are my own.
 
 ## AI tools used
 - ChatGPT (OpenAI)
 - Claude (Anthropic)
 
 ## How AI tools were used
-1. **Debugging and code review**
-   - Help with diagnosing runtime errors and pandas index/alignment issues.
-   - Sanity-checking that the full pipeline runs end-to-end via `python -m main`.
+1. **Library usage and references**
+   - Quick clarifications on pandas time-series operations, scikit-learn evaluation patterns, yfinance data download usage, matplotlib plotting, and pathlib file paths.
 
-2. **Learning libraries and project structure**
-   - Guidance on practical usage of `pathlib` for consistent paths and output folders.
-   - Minor suggestions for keeping modules separated and organized.
+2. **Debugging and sanity checks**
+   - Help diagnosing runtime errors and edge cases (e.g., pandas alignment issues, time-series split constraints, imbalanced folds).
 
-3. **Implementation support for execution lag**
-   - Assistance implementing the `pending` mechanism used to enforce a delay between signal generation and trade execution (to reduce look-ahead bias).
-
-4. **ML trigger calibration idea**
-   - Suggestion to use a rolling quantile trigger on predicted probabilities (instead of a fixed probability threshold) to reduce sensitivity to probability calibration drift.
-
-5. **Documentation and writing**
-   - Formatting improvements for README and minor grammar/clarity edits.
+3. **Documentation**
+   - Formatting and clarity edits for README and short explanatory text.
 
 ## What AI tools were not used for
-- Defining the research question or overall approach.
-- Selecting assets (QQQ/TLT), portfolio weights, or the train/test split concept.
-- Designing the core label methodology and backtesting setup.
+- Defining the research question, experimental design, or overall approach.
+- Choosing assets (IWM/TLT), weights, time period, or the train/test split logic.
+- Writing the full codebase end-to-end.
 - Writing results interpretations or conclusions (these are based on the outputs produced by my code).
