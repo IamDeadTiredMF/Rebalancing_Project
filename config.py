@@ -1,6 +1,6 @@
 from pathlib import Path
 
-#data for the etf used in rebalancing and the time periods, VIC
+#data for the etf used in rebalancing and the time periods
 start_date="2010-01-01"
 end_date="2025-01-01" #last day is excluded in yfinance download, so set to first day of next year to include full 2024 data (31.12.2024)
 train_date="2017-12-31" #date to split train and test data instead of using % split. Test data will be from 2018-01-01 to end_date
@@ -31,7 +31,7 @@ decision_frequency=1
 
 #ml params
 random_seed=42
-prob_quantile=0.95
+prob_quantile=0.90
 ml_thr_window=252
 cv_folds=5
 
