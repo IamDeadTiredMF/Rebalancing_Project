@@ -87,6 +87,8 @@ If you want to regenerate all figures and tables from scratch:
 rm outputs/results/backtest_IWM_TLT.csv
 rm outputs/figures/*.png
 rm outputs/tables/summary_table.md
+rm data/raw/*.csv
+rm data/processed/*.csv
 ```
 
 2. **Run the pipeline:**
